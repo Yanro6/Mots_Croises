@@ -13,6 +13,7 @@ import javafx.scene.control.TextFormatter;
 import javafx.scene.control.TextFormatter.Change;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import models.MotsCroisesTP6;
 
@@ -24,6 +25,8 @@ public class ControleurTP6 {
 
 	private TextField modeleTF;
 
+	private boolean horiz;
+
 	@FXML // pour rendre la variable visible depuis SceneBuilder
 	private GridPane grilleMC;
 
@@ -32,6 +35,7 @@ public class ControleurTP6 {
 
 	@FXML
 	private void initialize() throws SQLException {
+		horiz = true;
 		cg = new ChargerGrille();
 		nouvelleGrille = new Button("nouvelle grille");
 		// modele = MotsCroisesFactory.creerMotsCroises2x3();
@@ -40,9 +44,9 @@ public class ControleurTP6 {
 		for (Node n : grilleMC.getChildren()) {
 			if (n instanceof TextField) {
 				TextField tf = (TextField) n;
-				/*
-				 * tf.setOnMouseClicked((e) -> { this.clicLettre(e); });
-				 */
+				tf.setOnMouseClicked((e) -> {
+					this.clicLettre(e);
+				});
 				tf.setOnKeyPressed((e) -> {
 					this.keyLettre(e);
 				});
@@ -60,9 +64,17 @@ public class ControleurTP6 {
 		}
 	}
 
+	public void clicLettre(MouseEvent e) {
+		if (horiz) {
+			horiz = false;
+		} else {
+			horiz = true;
+		}
+	}
+
 	@FXML
 	public void keyLettre(KeyEvent e) {
-		TextField nextTf = new TextField();
+		TextField nextTf = setTF();
 		TextField tf = (TextField) e.getSource();
 		switch (e.getCode()) {
 		case UP:
@@ -78,21 +90,58 @@ public class ControleurTP6 {
 			int col = ((int) tf.getProperties().get("gridpane-column")) + 1;
 			ObservableList<Node> tfs = grilleMC.getChildren();
 			int i = 0;
-
-			nextTf = (TextField) tfs.get(tfs.size() - 2);
-			while (!((((int) nextTf.getProperties().get("gridpane-row") + 1) == lig)
-					&& (((int) nextTf.getProperties().get("gridpane-column") + 1) == col))) {
+			if (horiz) {
+				nextTf = (TextField) tfs.get(tfs.size() - 2);
+				while (!((((int) nextTf.getProperties().get("gridpane-row") + 1) == lig)
+						&& (((int) nextTf.getProperties().get("gridpane-column") + 1) == col))) {
+					nextTf = (TextField) tfs.get(i);
+					i++;
+				}
 				nextTf = (TextField) tfs.get(i);
-				i++;
+				tf.focusedProperty().addListener((arg0, oldValue, newValue) -> {
+					tf.setText(e.getCode().toString());
+				});
+				tf.setStyle("-fx-focus-color: blue; -fx-faint-focus-color: blue; -fx-text-fill: black;");
+				nextTf.requestFocus();
+			} else {
+				nextTf = (TextField) tf;
+				if ((int) nextTf.getProperties().get("gridpane-row") + 1 < grilleMC.getRowCount()) {
+					nextTf = (TextField) tfs.get(tfs.size() - 2);
+					while (!((((int) nextTf.getProperties().get("gridpane-row") + 1) == lig)
+							&& (((int) nextTf.getProperties().get("gridpane-column") + 1) == col))) {
+						nextTf = (TextField) tfs.get(i);
+						i++;
+					}
+					nextTf = (TextField) tfs.get(i);
+					col = ((int) tf.getProperties().get("gridpane-column"));
+					while (((int) nextTf.getProperties().get("gridpane-column")) != col) {
+						try {
+							nextTf = (TextField) tfs.get(i);
+						} catch (ClassCastException err) {
+						}
+						i++;
+					}
+					tf.focusedProperty().addListener((arg0, oldValue, newValue) -> {
+						tf.setText(e.getCode().toString());
+					});
+					tf.setStyle("-fx-focus-color: blue; -fx-faint-focus-color: blue; -fx-text-fill: black;");
+					nextTf.requestFocus();
+				} else {
+					nextTf = (TextField) tfs.get(0);
+					while (((int) nextTf.getProperties().get("gridpane-column") + 1) != col) {
+						nextTf = (TextField) tfs.get(i);
+						i++;
+					}
+					nextTf = (TextField) tfs.get(i);
+					tf.focusedProperty().addListener((arg0, oldValue, newValue) -> {
+						tf.setText(e.getCode().toString());
+					});
+					tf.setStyle("-fx-focus-color: blue; -fx-faint-focus-color: blue; -fx-text-fill: black;");
+
+					nextTf.requestFocus();
+				}
 			}
-			nextTf = (TextField) tfs.get(i);
 		}
-		tf.focusedProperty().addListener((arg0, oldValue, newValue) -> {
-			tf.setText(e.getCode().toString());
-		});
-		tf.setStyle("-fx-focus-color: blue; -fx-faint-focus-color: blue; -fx-text-fill: black;");
-		nextTf.requestFocus();
-		;
 	}
 
 	/*
